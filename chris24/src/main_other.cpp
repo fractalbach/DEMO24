@@ -1,17 +1,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h> // only include this one in the source file with main()!
 #include <chrono>
-
-#define SCREEN_WIDTH 680
-#define SCREEN_HEIGHT 480
-
-typedef struct vec3 {
-    double x;
-    double y;
-    double z;
-} vec3;
-
-vec3 framebuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+#include "draw.cpp" // this will define SCREEN_HEIGHT, SCREEN_WIDTH, and framebuffer
 
 double time() {
     const auto p1 = std::chrono::system_clock::now();
@@ -20,34 +10,10 @@ double time() {
 
 double start_time = time();
 
-/* Fill framebuffer with some stuff */
-void draw() {
-
-    const double iTime = time() - start_time;
-
-    for (int y = 0; y < SCREEN_HEIGHT; y++) {
-        for (int x = 0; x < SCREEN_WIDTH; x++) {
-            const double u = double(x) / SCREEN_WIDTH;
-            const double v = double(y) / SCREEN_HEIGHT;
-            
-            vec3 color = vec3{
-                0.5f + 0.5f * cos( iTime + u ),
-                0.5f + 0.5f * cos( iTime + v + 2.0 ),
-                0.5f + 0.5f * cos( iTime + u + 4.0 )
-            };
-
-            framebuffer[y][x] = color;
-        }
-    }
-}
-
-
 int main(int argc, char* argv[])
 {
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
-    SDL_Surface* surface = nullptr;
-    SDL_Texture* texture = nullptr;
 
     SDL_Init(SDL_INIT_VIDEO);
     window = SDL_CreateWindow("Demo24", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
@@ -65,14 +31,15 @@ int main(int argc, char* argv[])
         }
 
         /* Do fun drawing functions to the framebuffer, without worrying about SDL stuff */
-        draw();
+        const float iTime = float( time() - start_time );
+        draw( iTime );
 
         /* Update Screen */
         SDL_RenderClear(renderer);
         for (int y = 0; y < SCREEN_HEIGHT; y++) {
             for (int x = 0; x < SCREEN_WIDTH; x++) {
                 vec3 color = framebuffer[y][x];
-                SDL_SetRenderDrawColor(renderer, color.x * 256, color.y * 256, color.z * 256, 1.0);
+                SDL_SetRenderDrawColor(renderer, color.x * 255, color.y * 255, color.z * 255, 1.0);
                 SDL_RenderPoint(renderer, x, y);
             }
         }
