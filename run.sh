@@ -1,1 +1,1 @@
-make && ./out.app
+make && cd out && ./demo.app

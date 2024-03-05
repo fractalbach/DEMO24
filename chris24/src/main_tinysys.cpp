@@ -8,6 +8,7 @@
 
 int main(int argc, char *argv[]) {
 
+	int frame = 0;
 	static uint16_t* screen = (uint16_t*)VPUAllocateBuffer(SCREEN_HEIGHT*SCREEN_WIDTH*2);
 
 	struct EVideoContext vx;
@@ -25,7 +26,7 @@ int main(int argc, char *argv[]) {
 		float iTime = float(uintTimeMs) / 1000.0f;
 
 		// Pass in helpful data from the system, and do all of the fun stuff!
-		draw(iTime);
+		draw(iTime, frame);
 
 		// Convert our framebuffer into data the screen can actually use
 		for (int y = 0; y < SCREEN_HEIGHT; y++) {
@@ -37,6 +38,8 @@ int main(int argc, char *argv[]) {
 				screen[x + y * SCREEN_HEIGHT] = MAKECOLORRGB12(r, g, b);
 			}
 		}
+
+		frame++;
 
 		// Finish memory writes to display buffer
 		CFLUSH_D_L1;
