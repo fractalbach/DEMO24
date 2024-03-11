@@ -1,34 +1,38 @@
+#if 0
+
 #ifndef DRAW_CPP
 #define DRAW_CPP
 
-#include <math.h>
 #include <stdio.h>
 #include "font_data.h"
 #include "credits.h"
-#include "vec3.h"
+// #include "table.h"
 
-#define SCREEN_WIDTH 680
-#define SCREEN_HEIGHT 480
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 240
 #define FONT_WIDTH 32
 #define FONT_HEIGHT 25
+
+inline void setPixel(int x, int y, float r, float g, float b);
 
 const char hello[13] = { "HELLO WORLD!" };
 const char special[10] = { "CREDITS!!" };
 
-vec3  framebuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 float time_previous_frame = 0.0f;
-char  str_fps[5] = { "0000" };
+char  str_fps[7] = { "000000" };
 char  str_time[6] = { "00:00" };
 int   debug_frame = 0;
 
+float mycos( float x ) { return x; };
 
 void draw_char( char c, int startx, int starty )
 {
-    assert( c >= ' ' && c <= 'Z' );
+    // assert( c >= ' ' && c <= 'Z' );
     int a = (int)c - 32;
     int tilex = a % 10;
     int tiley = a / 10;
 
+    // precompute max to avoid branches in the body
     for (int offy = 0; offy < FONT_HEIGHT; offy++)
     {
         int targety = starty + offy;
@@ -45,16 +49,18 @@ void draw_char( char c, int startx, int starty )
             float r = font_data[imgy][imgx][0] / 63.0f;
             float g = font_data[imgy][imgx][1] / 63.0f;
             float b = font_data[imgy][imgx][2] / 63.0f;
+            // precompute this
             if ( (r+g+b) < 0.001 )
                 continue;
 
-            framebuffer[targety][targetx] = vec3{ r, g, b };
+            setPixel(targetx, targety, r, g, b);
+            // framebuffer[targety][targetx] = vec3{ r, g, b };
 
             // HACK: wastefully draws a drop shadow
-            if (targety+2 > SCREEN_HEIGHT || targetx+2 > SCREEN_WIDTH)
-                continue;
-            framebuffer[ targety + 1 ][ targetx + 1 ] = vec3{ 0.f, 0.f, 0.f };
-            framebuffer[ targety + 2 ][ targetx + 2 ] = vec3{ 0.f, 0.f, 0.f };
+            //if (targety+2 > SCREEN_HEIGHT || targetx+2 > SCREEN_WIDTH)
+            //    continue;
+            // framebuffer[ targety + 1 ][ targetx + 1 ] = vec3{ 0.f, 0.f, 0.f };
+            // framebuffer[ targety + 2 ][ targetx + 2 ] = vec3{ 0.f, 0.f, 0.f };
         }
     }
 }
@@ -124,8 +130,8 @@ void draw_part1( float time )
     // draw_string_centered( hello, sizeof(hello)-1, string_y );
 
     // Draw more text (bounces left to right)
-    const int RANGE2 = (SCREEN_WIDTH - FONT_WIDTH);
-    const int string_x = (SCREEN_WIDTH/2-150) * sin( time ) + (SCREEN_WIDTH/2);
+    // const int RANGE2 = (SCREEN_WIDTH - FONT_WIDTH);
+    const int string_x = (SCREEN_WIDTH/2-150) * mycos( time ) + (SCREEN_WIDTH/2);
     const int string_y = (SCREEN_HEIGHT+20) -  ((SCREEN_HEIGHT+50)/10.0f) * time;
     draw_string_centered_around_point( special, sizeof(special)-1, string_x, string_y );
 }
@@ -140,12 +146,6 @@ void draw_part2( float time )
 // iTime: floating point number of seconds elapsed since beginning of program
 void draw( float time, int frame )
 {
-    debug_frame = frame; // HACK: remove after debugging
-    if (frame % 1000 == 0) {
-        printf("frame=(%d)", frame);
-    }
-
-
     for (int y = 0; y < SCREEN_HEIGHT; y++)
     {
         for (int x = 0; x < SCREEN_WIDTH; x++)
@@ -153,13 +153,16 @@ void draw( float time, int frame )
             const float u = float(x) / SCREEN_WIDTH;
             const float v = float(y) / SCREEN_HEIGHT;
             
-            vec3 color = vec3{
-                0.5f + 0.5f * cos( time + u ),
-                0.5f + 0.5f * cos( time + v + 2.0f ),
-                0.5f + 0.5f * cos( time + u + 4.0f )
-            };
+            const float r = 0.1f + 0.5f * mycos( time + u );
+            const float g = 0.1f + 0.5f * mycos( time + v + 2.0f );
+            const float b = 0.1f + 0.5f * mycos( time + u + 4.0f );
 
-            framebuffer[y][x] = color;
+            // const float r = 0.2;
+            // const float g = 0.2;
+            // const float b = 0.4;
+
+            // setPixel(x, y, r, g, b);
+            setPixel( x, y, r, g, b );
         }
     }
 
@@ -167,25 +170,27 @@ void draw( float time, int frame )
     static const float TIME_TRANSITION_1 = 6.0f;
 
     if (time > TIME_TRANSITION_1) {
-        draw_credits(time - TIME_TRANSITION_1);
+        // draw_credits(time - TIME_TRANSITION_1);
     }
 
     if (time < 10.0) {
-        draw_part1(time);
+        // draw_part1(time);
     }
     
     // Draw FPS in upper-left corner
     float dt = time - time_previous_frame;
-    uint fps = 1.0f / dt;
-    snprintf( str_fps, 5, "%04d", uint(dt*1000));
-    draw_string( str_fps, 4, 0, 0 );
+    // uint32_t fps = uint32_t( 1.0f / dt );
+    snprintf( str_fps, 7, "%06d", uint32_t( dt*1000 ) );
+    draw_string( str_fps, 6, 0, 0 );
     time_previous_frame = time;
 
     // draw the time elapsed since the demo began
-    snprintf( str_time, 6, "%02d:%02d", uint(time)/60, uint(time)%60 );
+    // snprintf( str_time, 6, "%02d:%02d", uint32_t(time)/60, uint32_t(time)%60 );
     draw_string( str_time, 5, 0, FONT_WIDTH );
 }
 
 
 
 #endif // #ifndef DRAW_CPP
+
+#endif // #if 0

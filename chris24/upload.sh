@@ -4,3 +4,5 @@ if [ $# -eq 0 ]
 else
     ../../build/release/riscvtool $1 -sendfile /dev/ttyUSB0
 fi
+
+# ../../build/release/riscvtool chris24.elf -sendfile /dev/ttyUSB0

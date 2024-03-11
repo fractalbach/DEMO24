@@ -1,3 +1,5 @@
+#if 0
+
 constexpr int credits_len = 20;
 const char credits[credits_len][22] =
 {
@@ -23,3 +25,5 @@ const char credits[credits_len][22] =
     { "             N       " }
 //  { "123456789ABCDEFGHIJKL" } <-- 21 chars max
 };
+
+#endif
